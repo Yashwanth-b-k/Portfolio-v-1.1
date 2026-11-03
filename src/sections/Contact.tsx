@@ -1,10 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, Send } from "lucide-react";
-import { Section, SectionHeader } from "@/components/ui/Section";
+import { ArrowUpRight, CheckCircle2 } from "lucide-react";
 import { profile, socials } from "@/data/resume";
 import { SocialIcon } from "@/components/SocialIcon";
-import { isValidEmail } from "@/utils";
+import { isValidEmail, cn } from "@/utils";
 import { fadeUp, stagger, viewportOnce } from "@/utils/motion";
 
 interface FormState {
@@ -12,7 +11,6 @@ interface FormState {
   email: string;
   message: string;
 }
-
 type Errors = Partial<Record<keyof FormState, string>>;
 
 export function Contact() {
@@ -36,8 +34,6 @@ export function Contact() {
     const next = validate();
     setErrors(next);
     if (Object.keys(next).length > 0) return;
-
-    // Open the user's mail client with prefilled content.
     const subject = encodeURIComponent(`Portfolio enquiry from ${form.name}`);
     const body = encodeURIComponent(`${form.message}\n\n— ${form.name} (${form.email})`);
     window.location.href = `mailto:${profile.email}?subject=${subject}&body=${body}`;
@@ -46,46 +42,58 @@ export function Contact() {
     setTimeout(() => setSent(false), 6000);
   };
 
-  const fieldClasses =
-    "w-full rounded-xl border bg-light-bg px-4 py-3 text-sm outline-none transition-colors placeholder:text-light-text/40 focus:border-light-accent dark:bg-dark-bg dark:placeholder:text-dark-text/40 dark:focus:border-dark-accent";
+  const field =
+    "w-full rounded-2xl border-0 bg-white/[0.07] px-5 py-4 text-[15px] text-white outline-none ring-1 ring-white/10 transition placeholder:text-white/35 focus:bg-white/10 focus:ring-2 focus:ring-[#2997ff]";
 
   return (
-    <Section id="contact">
-      <SectionHeader
-        eyebrow="Contact"
-        title="Let's build something reliable"
-        description="Open to software engineering roles and backend opportunities. Reach out directly or send a message below."
-        align="center"
+    <section id="contact" className="relative scroll-mt-12 overflow-hidden bg-black py-28 text-white sm:py-40">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[60vh]"
+        style={{
+          background:
+            "radial-gradient(60% 60% at 50% 100%, rgba(94,92,230,0.35), transparent 70%)",
+        }}
       />
 
-      <div className="mx-auto grid max-w-4xl gap-10 lg:grid-cols-[1fr_1.3fr]">
+      <div className="shell-wide relative grid gap-16 lg:grid-cols-[1.1fr_1fr] lg:gap-24">
         <motion.div
           variants={stagger}
           initial="hidden"
           whileInView="visible"
           viewport={viewportOnce}
-          className="space-y-3"
         >
-          {socials.map((s) => (
-            <motion.a
-              key={s.label}
-              variants={fadeUp}
-              href={s.href}
-              target={s.href.startsWith("http") ? "_blank" : undefined}
-              rel="noopener noreferrer"
-              className="flex items-center gap-4 rounded-xl border border-light-border bg-light-bg p-4 transition-all hover:-translate-y-0.5 hover:border-light-accent/40 hover:shadow-apple dark:border-dark-border dark:bg-dark-secondary dark:hover:border-dark-accent/40"
-            >
-              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-light-accent/10 text-light-accent dark:bg-dark-accent/15 dark:text-dark-accent">
-                <SocialIcon icon={s.icon} />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-sm font-medium">{s.label}</span>
-                <span className="block truncate text-xs text-light-text/60 dark:text-dark-text/60">
-                  {s.href.replace("mailto:", "").replace("https://", "")}
-                </span>
-              </span>
-            </motion.a>
-          ))}
+          <motion.p variants={fadeUp} className="eyebrow !text-white/50">
+            Contact
+          </motion.p>
+          <motion.h2 variants={fadeUp} className="display mt-4">
+            Let's talk.
+          </motion.h2>
+          <motion.p variants={fadeUp} className="lede mt-6 max-w-md !text-white/60">
+            Open to software engineering and backend roles. Replies within a day.
+          </motion.p>
+
+          <motion.ul variants={fadeUp} className="mt-10 space-y-1">
+            {socials.map((s) => (
+              <li key={s.label}>
+                <a
+                  href={s.href}
+                  target={s.href.startsWith("http") ? "_blank" : undefined}
+                  rel="noopener noreferrer"
+                  className="group flex items-center justify-between border-b border-white/10 py-4 text-[19px] transition-colors hover:text-[#2997ff]"
+                >
+                  <span className="flex items-center gap-4">
+                    <SocialIcon icon={s.icon} size={18} />
+                    {s.label}
+                  </span>
+                  <ArrowUpRight
+                    size={20}
+                    className="text-white/40 transition-transform duration-300 ease-apple group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#2997ff]"
+                  />
+                </a>
+              </li>
+            ))}
+          </motion.ul>
         </motion.div>
 
         <motion.form
@@ -95,101 +103,55 @@ export function Contact() {
           viewport={viewportOnce}
           onSubmit={handleSubmit}
           noValidate
-          className="space-y-4 rounded-2xl border border-light-border bg-light-bg p-7 shadow-apple dark:border-dark-border dark:bg-dark-secondary dark:shadow-apple-dark sm:p-8"
+          className="space-y-4 self-center"
         >
+          {(["name", "email"] as const).map((k) => (
+            <div key={k}>
+              <label htmlFor={k} className="sr-only">
+                {k === "name" ? "Your name" : "Your email"}
+              </label>
+              <input
+                id={k}
+                type={k === "email" ? "email" : "text"}
+                autoComplete={k}
+                placeholder={k === "name" ? "Name" : "Email"}
+                value={form[k]}
+                onChange={(e) => setForm({ ...form, [k]: e.target.value })}
+                className={cn(field, errors[k] && "ring-[#ff453a]")}
+                aria-invalid={Boolean(errors[k])}
+              />
+              {errors[k] && <p className="mt-2 px-1 text-[13px] text-[#ff453a]">{errors[k]}</p>}
+            </div>
+          ))}
           <div>
-            <label htmlFor="name" className="mb-1.5 block text-sm font-medium">
-              Name
-            </label>
-            <input
-              id="name"
-              type="text"
-              autoComplete="name"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              aria-invalid={!!errors.name}
-              aria-describedby={errors.name ? "name-error" : undefined}
-              className={`${fieldClasses} ${
-                errors.name
-                  ? "border-red-500 dark:border-red-500"
-                  : "border-light-border dark:border-dark-border"
-              }`}
-              placeholder="Jane Doe"
-            />
-            {errors.name && (
-              <p id="name-error" className="mt-1.5 text-xs text-red-500">
-                {errors.name}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="email" className="mb-1.5 block text-sm font-medium">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              aria-invalid={!!errors.email}
-              aria-describedby={errors.email ? "email-error" : undefined}
-              className={`${fieldClasses} ${
-                errors.email
-                  ? "border-red-500 dark:border-red-500"
-                  : "border-light-border dark:border-dark-border"
-              }`}
-              placeholder="jane@example.com"
-            />
-            {errors.email && (
-              <p id="email-error" className="mt-1.5 text-xs text-red-500">
-                {errors.email}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="message" className="mb-1.5 block text-sm font-medium">
-              Message
-            </label>
+            <label htmlFor="message" className="sr-only">Message</label>
             <textarea
               id="message"
-              rows={4}
+              rows={6}
+              placeholder="What are you building?"
               value={form.message}
               onChange={(e) => setForm({ ...form, message: e.target.value })}
-              aria-invalid={!!errors.message}
-              aria-describedby={errors.message ? "message-error" : undefined}
-              className={`${fieldClasses} resize-none ${
-                errors.message
-                  ? "border-red-500 dark:border-red-500"
-                  : "border-light-border dark:border-dark-border"
-              }`}
-              placeholder="Tell me about the role or project…"
+              className={cn(field, "resize-none", errors.message && "ring-[#ff453a]")}
+              aria-invalid={Boolean(errors.message)}
             />
             {errors.message && (
-              <p id="message-error" className="mt-1.5 text-xs text-red-500">
-                {errors.message}
-              </p>
+              <p className="mt-2 px-1 text-[13px] text-[#ff453a]">{errors.message}</p>
             )}
           </div>
-
-          <button type="submit" className="btn-primary w-full">
+          <button type="submit" className="btn-light w-full">
             {sent ? (
               <>
-                <CheckCircle2 size={16} /> Opening your mail app…
+                <CheckCircle2 size={16} /> Opening your mail app
               </>
             ) : (
-              <>
-                <Send size={16} /> Send Message
-              </>
+              "Send message"
             )}
           </button>
-          <p className="text-center text-xs text-light-text/50 dark:text-dark-text/50">
-            This form opens your email client with the message prefilled.
+          <p className="text-center text-[12px] text-white/35">
+            Opens your mail client with the message pre-filled.
           </p>
         </motion.form>
       </div>
-    </Section>
+    </section>
   );
 }

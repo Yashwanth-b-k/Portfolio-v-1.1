@@ -1,118 +1,93 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Briefcase, ChevronDown, MapPin, TrendingUp } from "lucide-react";
-import { Section, SectionHeader } from "@/components/ui/Section";
-import { Badge } from "@/components/ui/Badge";
+import { useRef } from "react";
+import { motion } from "framer-motion";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { SectionHeader } from "@/components/ui/Section";
 import { experiences } from "@/data/resume";
-import { cn } from "@/utils";
-import { fadeUp, stagger, viewportOnce } from "@/utils/motion";
+import { scaleIn, stagger, viewportOnce } from "@/utils/motion";
+
+const gradients = [
+  "radial-gradient(70% 80% at 80% 0%, rgba(10,132,255,0.55), transparent 70%)",
+  "radial-gradient(70% 80% at 80% 0%, rgba(191,90,242,0.5), transparent 70%)",
+  "radial-gradient(70% 80% at 80% 0%, rgba(255,159,10,0.45), transparent 70%)",
+];
 
 export function Experience() {
-  const [openIndex, setOpenIndex] = useState<number>(0);
+  const row = useRef<HTMLDivElement>(null);
+  const scrollBy = (dir: 1 | -1) =>
+    row.current?.scrollBy({ left: dir * 420, behavior: "smooth" });
 
   return (
-    <Section id="experience">
-      <SectionHeader
-        eyebrow="Experience"
-        title="Where I've worked"
-        description="Roles spanning production development, full-stack internships, and intensive engineering training. Click any role to expand details."
-      />
+    <section id="experience" className="panel scroll-mt-12 py-24 sm:py-32">
+      <div className="shell-wide flex items-end justify-between gap-6">
+        <SectionHeader
+          eyebrow="Experience"
+          title="Where the work happens."
+          sub="Shipping to production since 2024."
+          className="!mb-0"
+        />
+        <div className="hidden shrink-0 gap-2 pb-2 md:flex">
+          {[-1, 1].map((d) => (
+            <button
+              key={d}
+              onClick={() => scrollBy(d as 1 | -1)}
+              aria-label={d === 1 ? "Next" : "Previous"}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-black/[0.06] text-light-text transition hover:bg-black/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
+            >
+              {d === 1 ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <motion.div
+        ref={row}
         variants={stagger}
         initial="hidden"
         whileInView="visible"
         viewport={viewportOnce}
-        className="relative"
+        className="snap-row mt-12 cursor-grab active:cursor-grabbing sm:mt-16"
       >
-        {/* Timeline rail */}
-        <div className="absolute left-[19px] top-2 hidden h-[calc(100%-1rem)] w-px bg-light-border dark:bg-dark-border sm:block" />
+        {experiences.map((exp, i) => (
+          <motion.article
+            key={exp.company}
+            variants={scaleIn}
+            className="snap-item relative flex w-[86vw] max-w-[420px] shrink-0 flex-col overflow-hidden rounded-4xl bg-black p-8 text-white shadow-tile-dark sm:min-h-[560px] sm:p-10"
+          >
+            <div aria-hidden className="absolute inset-0" style={{ background: gradients[i % 3] }} />
+            <div className="relative flex h-full flex-col">
+              <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-white/55">
+                {exp.type} · {exp.duration}
+              </p>
+              <h3 className="mt-5 text-[32px] font-semibold leading-[1.05] tracking-tight">
+                {exp.company}
+              </h3>
+              <p className="mt-1 text-[17px] text-white/70">{exp.role}</p>
+              <p className="text-[13px] text-white/45">{exp.location}</p>
 
-        <div className="space-y-5">
-          {experiences.map((exp, i) => {
-            const open = openIndex === i;
-            return (
-              <motion.div key={exp.company} variants={fadeUp} className="relative sm:pl-14">
-                {/* Timeline node */}
-                <span className="absolute left-[11px] top-7 hidden h-4 w-4 rounded-full border-2 border-light-accent bg-light-bg dark:border-dark-accent dark:bg-dark-bg sm:block" />
+              <ul className="mt-8 space-y-3 text-[15px] leading-snug text-white/80">
+                {exp.highlights.map((h, hi) => (
+                  <li key={hi} className="flex gap-3">
+                    <span className="mt-[9px] h-1 w-1 shrink-0 rounded-full bg-white/60" />
+                    {h}
+                  </li>
+                ))}
+              </ul>
 
-                <div className="overflow-hidden rounded-2xl border border-light-border bg-light-bg shadow-apple transition-colors dark:border-dark-border dark:bg-dark-secondary dark:shadow-apple-dark">
-                  <button
-                    onClick={() => setOpenIndex(open ? -1 : i)}
-                    aria-expanded={open}
-                    className="flex w-full items-center gap-4 p-6 text-left"
+              <div className="mt-auto flex flex-wrap gap-2 pt-8">
+                {exp.impact.map((im) => (
+                  <span
+                    key={im}
+                    className="rounded-full bg-white/10 px-3 py-1 text-[12px] text-white/85 ring-1 ring-white/10"
                   >
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-light-secondary text-light-accent dark:bg-dark-bg dark:text-dark-accent">
-                      <Briefcase size={20} />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex flex-wrap items-center gap-2">
-                        <span className="text-lg font-semibold">{exp.role}</span>
-                        <Badge>{exp.type}</Badge>
-                      </span>
-                      <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-light-text/60 dark:text-dark-text/60">
-                        <span className="font-medium text-light-text/80 dark:text-dark-text/80">
-                          {exp.company}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MapPin size={13} /> {exp.location}
-                        </span>
-                        <span>{exp.duration}</span>
-                      </span>
-                    </span>
-                    <ChevronDown
-                      size={20}
-                      className={cn(
-                        "shrink-0 text-light-text/50 transition-transform duration-300 dark:text-dark-text/50",
-                        open && "rotate-180"
-                      )}
-                    />
-                  </button>
-
-                  <AnimatePresence initial={false}>
-                    {open && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                        className="overflow-hidden"
-                      >
-                        <div className="border-t border-light-border px-6 pb-6 pt-5 dark:border-dark-border">
-                          <ul className="space-y-2.5">
-                            {exp.highlights.map((h, hi) => (
-                              <li
-                                key={hi}
-                                className="flex gap-3 text-sm leading-relaxed text-light-text/75 dark:text-dark-text/75"
-                              >
-                                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-light-accent dark:bg-dark-accent" />
-                                {h}
-                              </li>
-                            ))}
-                          </ul>
-
-                          <div className="mt-5">
-                            <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-light-text/50 dark:text-dark-text/50">
-                              <TrendingUp size={14} /> Impact
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                              {exp.impact.map((m) => (
-                                <Badge key={m} strong>
-                                  {m}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
+                    {im}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </motion.article>
+        ))}
+        <div className="w-2 shrink-0" />
       </motion.div>
-    </Section>
+    </section>
   );
 }

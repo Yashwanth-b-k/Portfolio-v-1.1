@@ -1,34 +1,37 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { profile } from "@/data/resume";
 
 export function Loader() {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    const start = performance.now();
+    let raf = 0;
+    const tick = (t: number) => {
+      const p = Math.min((t - start) / 900, 1);
+      setN(Math.round(100 * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
   return (
     <motion.div
-      initial={{ opacity: 1 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.5 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-light-bg dark:bg-dark-bg"
+      exit={{ y: "-100%" }}
+      transition={{ duration: 0.9, ease: [0.76, 0, 0.24, 1] }}
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black text-white"
     >
-      <div className="flex flex-col items-center gap-5">
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="flex h-16 w-16 items-center justify-center rounded-2xl bg-light-accent text-2xl font-bold text-white dark:bg-dark-accent dark:text-black"
-        >
-          Y
-        </motion.div>
-        <div className="h-0.5 w-32 overflow-hidden rounded-full bg-light-border dark:bg-dark-border">
-          <motion.div
-            initial={{ x: "-100%" }}
-            animate={{ x: "100%" }}
-            transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-            className="h-full w-1/2 bg-light-accent dark:bg-dark-accent"
-          />
-        </div>
-        <p className="sr-only">Loading {profile.name}'s portfolio</p>
-      </div>
+      <motion.p
+        initial={{ opacity: 0, filter: "blur(10px)" }}
+        animate={{ opacity: 1, filter: "blur(0px)" }}
+        transition={{ duration: 0.8 }}
+        className="display text-gradient-animated"
+      >
+        Y.
+      </motion.p>
+      <p className="mt-6 font-mono text-[12px] tabular-nums text-white/40">{n.toString().padStart(3, "0")}</p>
+      <p className="sr-only">Loading {profile.name}'s portfolio</p>
     </motion.div>
   );
 }

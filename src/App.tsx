@@ -3,8 +3,8 @@ import { Route, Routes } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { ScrollProgress } from "@/components/ScrollProgress";
 import { Loader } from "@/components/Loader";
+import { CursorGlow } from "@/components/fx/CursorGlow";
 import { useTheme } from "@/hooks/useTheme";
 import Home from "@/pages/Home";
 import NotFound from "@/pages/NotFound";
@@ -14,7 +14,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 900);
+    const timer = setTimeout(() => setLoading(false), 1300);
     return () => clearTimeout(timer);
   }, []);
 
@@ -24,18 +24,18 @@ export default function App() {
 
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:rounded-full focus:bg-light-accent focus:px-4 focus:py-2 focus:text-sm focus:text-white dark:focus:bg-dark-accent dark:focus:text-black"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:rounded-full focus:bg-light-accent focus:px-4 focus:py-2 focus:text-sm focus:text-white"
       >
         Skip to content
       </a>
 
-      <ScrollProgress />
+      <CursorGlow />
       <Navbar theme={theme} toggleTheme={toggleTheme} />
 
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: loading ? 0 : 1 }}
-        transition={{ duration: 0.6 }}
+        transition={{ duration: 0.8 }}
       >
         <Routes>
           <Route path="/" element={<Home />} />

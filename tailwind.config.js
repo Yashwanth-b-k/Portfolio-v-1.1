@@ -5,21 +5,21 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Light theme
         light: {
           bg: "#FFFFFF",
           secondary: "#F5F5F7",
           text: "#1D1D1F",
+          muted: "#6E6E73",
           accent: "#0071E3",
           border: "#D2D2D7",
         },
-        // Dark theme
         dark: {
           bg: "#000000",
-          secondary: "#111111",
+          secondary: "#161617",
           text: "#F5F5F7",
+          muted: "#A1A1A6",
           accent: "#2997FF",
-          border: "#333333",
+          border: "#424245",
         },
       },
       fontFamily: {
@@ -33,26 +33,33 @@ export default {
           "Arial",
           "sans-serif",
         ],
+        mono: [
+          "SF Mono",
+          "JetBrains Mono",
+          "ui-monospace",
+          "Menlo",
+          "Consolas",
+          "monospace",
+        ],
       },
       maxWidth: {
-        content: "1120px",
+        content: "1024px",
+        wide: "1280px",
+      },
+      borderRadius: {
+        "4xl": "2rem",
+        "5xl": "2.5rem",
+      },
+      letterSpacing: {
+        tightest: "-0.04em",
       },
       boxShadow: {
-        apple: "0 4px 24px rgba(0, 0, 0, 0.08)",
-        "apple-lg": "0 12px 48px rgba(0, 0, 0, 0.12)",
-        "apple-dark": "0 4px 24px rgba(0, 0, 0, 0.5)",
+        tile: "0 2px 12px rgba(0,0,0,0.04), 0 20px 60px -20px rgba(0,0,0,0.12)",
+        "tile-dark": "0 2px 12px rgba(0,0,0,0.6), 0 20px 60px -20px rgba(0,0,0,0.9)",
+        window: "0 40px 120px -30px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.06) inset",
       },
-      keyframes: {
-        "fade-up": {
-          "0%": { opacity: "0", transform: "translateY(20px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
-        },
-        shimmer: {
-          "100%": { transform: "translateX(100%)" },
-        },
-      },
-      animation: {
-        "fade-up": "fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both",
+      transitionTimingFunction: {
+        apple: "cubic-bezier(0.16, 1, 0.3, 1)",
       },
     },
   },
