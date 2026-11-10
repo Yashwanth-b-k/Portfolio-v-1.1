@@ -1,117 +1,114 @@
-import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { useEffect, useRef, type CSSProperties } from "react";
+import { motion, useInView } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
-import { SectionHeader } from "@/components/ui/Section";
+import { Layer, Panel, SectionHeader } from "@/components/ui/Section";
 import { Badge } from "@/components/ui/Badge";
 import { projects } from "@/data/resume";
-import { viewportOnce } from "@/utils/motion";
-import { Magnetic } from "@/components/fx/Magnetic";
+import { fadeUp, viewportOnce } from "@/utils/motion";
+import { Ores, Torch } from "@/mc/Ambient";
+import { Chest } from "@/mc/models";
+import { gem } from "@/mc/sprites";
+import { play } from "@/mc/audio";
 import type { Project } from "@/types";
 
-const accents = [
-  ["#0a84ff", "#5e5ce6"],
-  ["#30d158", "#64d2ff"],
-  ["#ff9f0a", "#ff375f"],
-];
+const loot = ["#5fe0d8", "#3fd16a", "#f2c84b"];
 
-/** Sticky stacking card: each one pins, then scales back as the next slides over. */
+/** A vault chest: the lid swings open and the loot floats up when the card scrolls into view. */
 function Card({ p, i, total }: { p: Project; i: number; total: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 0.9]);
-  const opacity = useTransform(scrollYProgress, [0, 1], [1, i === total - 1 ? 1 : 0.4]);
-  const accent = accents[i % accents.length];
+  const head = useRef<HTMLDivElement>(null);
+  // Open while the chest itself is comfortably on screen (not hidden behind the hotbar).
+  const open = useInView(head, { amount: 1, margin: "-8% 0px -22% 0px" });
+  const was = useRef(false);
+  useEffect(() => {
+    if (open !== was.current) play(open ? "chestOpen" : "chestClose");
+    was.current = open;
+  }, [open]);
 
   return (
-    <div ref={ref} className="sticky top-16 mb-8" style={{ top: `calc(4rem + ${i * 14}px)` }}>
-      <motion.article
-        style={{ scale, opacity }}
-        className="relative grid overflow-hidden rounded-[2rem] bg-[#0c0c0d] text-white shadow-[0_40px_120px_-30px_rgba(0,0,0,0.7)] ring-1 ring-white/10 lg:min-h-[560px] lg:grid-cols-2"
-      >
-        <div
-          aria-hidden
-          className="absolute inset-0 opacity-90"
-          style={{
-            background: `radial-gradient(80% 70% at 100% 0%, ${accent[0]}80, transparent 60%), radial-gradient(60% 60% at 0% 100%, ${accent[1]}66, transparent 60%)`,
-          }}
-        />
-        <div className="grain absolute inset-0" />
-
-        <div className="relative p-8 sm:p-12 lg:p-14">
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-[12px] text-white/40">0{i + 1} / 0{total}</span>
-            <span className="h-px w-10 bg-white/20" />
-            <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-white/50">
-              {p.tagline}{p.date && ` · ${p.date}`}
-            </span>
+    <motion.article variants={fadeUp} initial="hidden" whileInView="visible" viewport={viewportOnce}>
+      <Panel className="chest-host grid gap-8 p-6 sm:p-9 lg:grid-cols-[1.05fr_1fr] lg:gap-12">
+        <div>
+          <div ref={head} className="flex items-end gap-4" style={{ "--open": open ? 1 : 0 } as CSSProperties}>
+            <Chest item={gem(loot[i % loot.length])} />
+            <div className="pb-2">
+              <p className="label mute">
+                Chest 0{i + 1} / 0{total}
+              </p>
+              <p className="label mt-1" style={{ color: "var(--accent)" }}>
+                {p.tagline}
+                {p.date && ` · ${p.date}`}
+              </p>
+            </div>
           </div>
-          <h3 className="mt-8 font-semibold leading-[1.02] tracking-tightest" style={{ fontSize: "clamp(2.25rem, 4.5vw, 4rem)" }}>
+
+          <h3 className="mt-5 font-head font-bold leading-[0.95]" style={{ fontSize: "clamp(2.4rem, 4.8vw, 3.8rem)" }}>
             {p.name}
           </h3>
-          <p className="mt-6 max-w-lg text-[17px] leading-relaxed text-white/65">{p.description}</p>
+          <p className="mute mt-4 max-w-lg text-[23px] leading-tight">{p.description}</p>
 
-          <div className="mt-8 flex flex-wrap gap-2">
+          <div className="mt-6 flex flex-wrap gap-2">
             {p.technologies.map((t) => (
-              <Badge key={t} onDark>{t}</Badge>
+              <Badge key={t}>{t}</Badge>
             ))}
           </div>
 
           {p.github && (
-            <div className="mt-10">
-              <Magnetic strength={0.25}>
-                <a
-                  href={p.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn sheen bg-white text-black hover:bg-white"
-                >
-                  View on GitHub <ArrowUpRight size={16} />
-                </a>
-              </Magnetic>
-            </div>
+            <a href={p.github} target="_blank" rel="noopener noreferrer" className="mc-btn mc-btn-wood mt-8">
+              View on GitHub <ArrowUpRight size={18} strokeWidth={3} />
+            </a>
           )}
         </div>
 
-        <div className="relative flex flex-col justify-end gap-3 p-8 sm:p-12 lg:p-14">
-          <p className="mb-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-white/40">Architecture</p>
+        <div className="flex flex-col gap-3">
+          <p className="label mute mb-1">Architecture</p>
           {p.architecture.map((a, ai) => (
             <motion.div
               key={ai}
-              initial={{ opacity: 0, x: 40 }}
+              initial={{ opacity: 0, x: 36 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={viewportOnce}
-              transition={{ delay: 0.1 + ai * 0.12, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-4 text-[14px] leading-snug text-white/85 backdrop-blur-xl"
+              transition={{ delay: 0.1 + ai * 0.1, duration: 0.45, ease: [0.3, 1.5, 0.6, 1] }}
+              className="mc-inset flex gap-3 px-4 py-3 leading-tight"
             >
-              <span className="mr-3 font-mono text-[11px] text-white/40">0{ai + 1}</span>
+              <span className="label mt-1" style={{ color: "var(--accent)" }}>0{ai + 1}</span>
               {a}
             </motion.div>
           ))}
-          <ul className="mt-6 space-y-2 border-t border-white/10 pt-6 text-[14px] text-white/70">
+          <ul className="mt-4 space-y-2.5 border-t-4 border-[#0e0e11]/25 pt-5">
             {p.achievements.map((ach, k) => (
-              <li key={k} className="flex gap-3">
-                <span className="mt-[8px] h-1 w-1 shrink-0 rounded-full" style={{ background: accent[0] }} />
+              <li key={k} className="flex gap-3 leading-tight">
+                <span className="bullet" />
                 {ach}
               </li>
             ))}
           </ul>
         </div>
-      </motion.article>
-    </div>
+      </Panel>
+    </motion.article>
   );
 }
 
 export function Projects() {
   return (
-    <section id="projects" className="scroll-mt-12 bg-light-bg py-24 dark:bg-dark-bg sm:py-32">
-      <div className="shell">
-        <SectionHeader eyebrow="Projects" title="Selected work." sub="Backend first, end to end." />
-      </div>
-      <div className="shell-wide">
+    <Layer
+      id="projects"
+      material="deep"
+      wide
+      fx={
+        <>
+          <Ores kinds={["gold", "diamond", "gold", "emerald"]} seed={14} density={0.35} />
+          <Torch style={{ right: "3%", top: 200 }} />
+          <Torch style={{ left: "2%", top: 980 }} />
+          <Torch className="hidden md:block" style={{ right: "2%", top: 1760 }} />
+        </>
+      }
+    >
+      <SectionHeader eyebrow="Projects" title="Selected work." sub="Backend first, end to end." />
+      <div className="space-y-10">
         {projects.map((p, i) => (
           <Card key={p.name} p={p} i={i} total={projects.length} />
         ))}
       </div>
-    </section>
+    </Layer>
   );
 }

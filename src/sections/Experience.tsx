@@ -1,93 +1,97 @@
-import { useRef } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { SectionHeader } from "@/components/ui/Section";
+import { Layer, Panel, SectionHeader } from "@/components/ui/Section";
 import { experiences } from "@/data/resume";
-import { scaleIn, stagger, viewportOnce } from "@/utils/motion";
+import { fadeUp, viewportOnce } from "@/utils/motion";
+import { BugField, Flyers, Ores, Torch } from "@/mc/Ambient";
+import { Guide } from "@/mc/Guide";
+import { ladder } from "@/mc/sprites";
+import { css } from "@/mc/textures";
 
-const gradients = [
-  "radial-gradient(70% 80% at 80% 0%, rgba(10,132,255,0.55), transparent 70%)",
-  "radial-gradient(70% 80% at 80% 0%, rgba(191,90,242,0.5), transparent 70%)",
-  "radial-gradient(70% 80% at 80% 0%, rgba(255,159,10,0.45), transparent 70%)",
-];
-
+/** The stone mine. Each job is a landing on the way down — and the place is crawling with bugs. */
 export function Experience() {
-  const row = useRef<HTMLDivElement>(null);
-  const scrollBy = (dir: 1 | -1) =>
-    row.current?.scrollBy({ left: dir * 420, behavior: "smooth" });
+  const [squashed, setSquashed] = useState(0);
 
   return (
-    <section id="experience" className="panel scroll-mt-12 py-24 sm:py-32">
-      <div className="shell-wide flex items-end justify-between gap-6">
-        <SectionHeader
-          eyebrow="Experience"
-          title="Where the work happens."
-          sub="Shipping to production since 2024."
-          className="!mb-0"
-        />
-        <div className="hidden shrink-0 gap-2 pb-2 md:flex">
-          {[-1, 1].map((d) => (
-            <button
-              key={d}
-              onClick={() => scrollBy(d as 1 | -1)}
-              aria-label={d === 1 ? "Next" : "Previous"}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-black/[0.06] text-light-text transition hover:bg-black/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
-            >
-              {d === 1 ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-            </button>
-          ))}
-        </div>
-      </div>
+    <Layer
+      id="experience"
+      material="stone"
+      fx={
+        <>
+          <Ores kinds={["iron", "coal", "iron"]} seed={9} density={0.4} />
+          <Flyers kind="bat" count={2} />
+          <Torch style={{ right: "6%", top: 180 }} />
+          <Torch style={{ left: "3%", top: 760 }} />
+          <Torch className="hidden md:block" style={{ right: "4%", top: 1300 }} />
+        </>
+      }
+      over={<BugField count={6} onSquash={() => setSquashed((n) => n + 1)} />}
+    >
+      <SectionHeader eyebrow="Experience" title="Where the work happens." sub="Shipping to production since 2024." />
 
-      <motion.div
-        ref={row}
-        variants={stagger}
-        initial="hidden"
-        whileInView="visible"
-        viewport={viewportOnce}
-        className="snap-row mt-12 cursor-grab active:cursor-grabbing sm:mt-16"
+      <Guide
+        look="miner"
+        name="Shift lead"
+        className="mb-12"
+        say={["They come back. They always come back.", "Root cause first, patch second."]}
       >
-        {experiences.map((exp, i) => (
-          <motion.article
-            key={exp.company}
-            variants={scaleIn}
-            className="snap-item relative flex w-[86vw] max-w-[420px] shrink-0 flex-col overflow-hidden rounded-4xl bg-black p-8 text-white shadow-tile-dark sm:min-h-[560px] sm:p-10"
+        Careful — there are <b>production bugs</b> loose down here. Click one to squash it.
+        <span className="mt-2 flex items-center gap-2">
+          <motion.span
+            key={squashed}
+            initial={{ scale: 1.5 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 500, damping: 14 }}
+            className="chip chip-strong"
+            aria-live="polite"
           >
-            <div aria-hidden className="absolute inset-0" style={{ background: gradients[i % 3] }} />
-            <div className="relative flex h-full flex-col">
-              <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-white/55">
-                {exp.type} · {exp.duration}
-              </p>
-              <h3 className="mt-5 text-[32px] font-semibold leading-[1.05] tracking-tight">
-                {exp.company}
-              </h3>
-              <p className="mt-1 text-[17px] text-white/70">{exp.role}</p>
-              <p className="text-[13px] text-white/45">{exp.location}</p>
+            Squashed: {squashed}
+          </motion.span>
+          {squashed >= 5 && <span className="label text-[9px]">On-call hero!</span>}
+        </span>
+      </Guide>
 
-              <ul className="mt-8 space-y-3 text-[15px] leading-snug text-white/80">
+      <ol className="relative space-y-10 md:pl-24">
+        <span
+          aria-hidden
+          className="ladder absolute bottom-0 left-4 top-0 hidden w-12 md:block"
+          style={{ backgroundImage: css(ladder()) }}
+        />
+        {experiences.map((exp, i) => (
+          <motion.li key={exp.company} variants={fadeUp} initial="hidden" whileInView="visible" viewport={viewportOnce} className="relative">
+            <span aria-hidden className="label absolute -left-24 top-6 hidden w-20 bg-[#0e0e11] py-2 text-center text-[#f2c84b] md:block">
+              Lv {experiences.length - i}
+            </span>
+            <Panel lift className="p-6 sm:p-8">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={i === 0 ? "chip chip-strong" : "chip"}>{exp.type}</span>
+                <span className="label mute">{exp.duration}</span>
+              </div>
+              <h3 className="mt-4 font-head text-[clamp(2.1rem,3.6vw,2.9rem)] font-bold leading-none">{exp.company}</h3>
+              <p className="mt-2 text-[28px] leading-tight">
+                {exp.role} <span className="mute">· {exp.location}</span>
+              </p>
+
+              <ul className="mt-6 space-y-2.5">
                 {exp.highlights.map((h, hi) => (
                   <li key={hi} className="flex gap-3">
-                    <span className="mt-[9px] h-1 w-1 shrink-0 rounded-full bg-white/60" />
+                    <span className="bullet" />
                     {h}
                   </li>
                 ))}
               </ul>
 
-              <div className="mt-auto flex flex-wrap gap-2 pt-8">
+              <div className="mc-inset mt-6 flex flex-wrap gap-2 p-3">
                 {exp.impact.map((im) => (
-                  <span
-                    key={im}
-                    className="rounded-full bg-white/10 px-3 py-1 text-[12px] text-white/85 ring-1 ring-white/10"
-                  >
+                  <span key={im} className="chip">
                     {im}
                   </span>
                 ))}
               </div>
-            </div>
-          </motion.article>
+            </Panel>
+          </motion.li>
         ))}
-        <div className="w-2 shrink-0" />
-      </motion.div>
-    </section>
+      </ol>
+    </Layer>
   );
 }

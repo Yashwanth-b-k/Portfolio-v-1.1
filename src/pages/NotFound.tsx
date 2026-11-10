@@ -1,16 +1,22 @@
 import { Link } from "react-router-dom";
+import { Flyers, Torch } from "@/mc/Ambient";
 
 export default function NotFound() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
-      <p className="text-7xl font-bold text-light-accent dark:text-dark-accent">404</p>
-      <h1 className="mt-4 text-2xl font-semibold">Page not found</h1>
-      <p className="mt-2 text-light-text/60 dark:text-dark-text/60">
-        The page you're looking for doesn't exist.
-      </p>
-      <Link to="/" className="btn-primary mt-8">
-        Back to home
-      </Link>
+    <main className="layer layer-deep flex min-h-screen flex-col items-center justify-center px-6 text-center" data-mat="deep">
+      <div className="layer-shade" />
+      <div className="layer-fx">
+        <Flyers kind="bat" count={4} />
+        <Torch style={{ left: "50%", top: "22%" }} />
+      </div>
+      <div className="layer-body flex flex-col items-center">
+        <p className="title-3d">404</p>
+        <h1 className="h-title mt-6">You dug too far.</h1>
+        <p className="lede mt-3">There's nothing in this cave but bats.</p>
+        <Link to="/" className="mc-btn mc-btn-green mt-8">
+          Back to the surface
+        </Link>
+      </div>
     </main>
   );
 }

@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { useEffect, useSyncExternalStore } from "react";
+import { Download, Volume2, VolumeX } from "lucide-react";
 import { navLinks, profile } from "@/data/resume";
 import { useActiveSection } from "@/hooks/useActiveSection";
+import { useScrollProgress } from "@/hooks/useScrollProgress";
 import { cn, scrollToSection } from "@/utils";
-import { ThemeToggle } from "./ThemeToggle";
+import { GrassCube } from "@/mc/models";
+import { gem, icons } from "@/mc/sprites";
+import { isSoundOn, play, setSound, subscribeSound } from "@/mc/audio";
 
 interface NavbarProps {
   theme: "light" | "dark";
@@ -13,114 +15,116 @@ interface NavbarProps {
 
 const sectionIds = ["home", ...navLinks.map((l) => l.id)];
 
+/** What each depth of the page is called on the HUD. */
+const BIOMES: Record<string, string> = {
+  home: "Surface",
+  about: "Topsoil",
+  experience: "Stone mine",
+  skills: "Ore cavern",
+  projects: "Deep vault",
+  education: "Buried library",
+  contact: "Base camp",
+};
+
+const slotIcon = (id: string): string =>
+  ({
+    about: icons.book,
+    experience: icons.pick,
+    skills: gem("#5fe0d8"),
+    projects: icons.chest,
+    education: icons.cap,
+    contact: icons.mail,
+  })[id] ?? icons.book;
+
+/**
+ * The HUD. Top-left: logo + depth read-out. Top-right: résumé + day/night.
+ * Bottom: a hotbar — one slot per section (keys 1–6 work too) with the
+ * scroll position drawn as an XP bar above it.
+ */
 export function Navbar({ theme, toggleTheme }: NavbarProps) {
-  const [open, setOpen] = useState(false);
   const active = useActiveSection(sectionIds);
+  const progress = useScrollProgress();
+  const depth = Math.round(64 - progress * 128);
+  const sound = useSyncExternalStore(subscribeSound, isSoundOn, () => true);
 
   useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (e.metaKey || e.ctrlKey || e.altKey || t?.closest("input,textarea,[contenteditable]")) return;
+      const link = navLinks[Number(e.key) - 1];
+      if (link) scrollToSection(link.id, 24);
     };
-  }, [open]);
-
-  const handleNav = (id: string) => {
-    setOpen(false);
-    scrollToSection(id, 60);
-  };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50">
-      {/* Apple-style: always dark translucent bar, 48px tall, tiny 12px links */}
-      <div className="glass-dark text-white/85">
-        <nav
-          className="shell flex h-12 items-center justify-between"
-          aria-label="Primary"
+    <>
+      <header className="pointer-events-none fixed inset-x-0 top-0 z-50 flex items-start justify-between gap-3 p-3 sm:p-4">
+        <button
+          onClick={() => scrollToSection("home", 0)}
+          className="pointer-events-auto flex min-w-0 items-center gap-2 text-left"
+          aria-label="Back to the surface"
         >
+          <GrassCube size={22} />
+          <span className="hud-text whitespace-nowrap leading-[1.7]">
+            <span className="hidden sm:block">{profile.name}</span>
+            <span className="block text-[#ffe94a]">
+              Y: {depth}
+              <span className="hidden sm:inline"> · </span>
+              <span className="block sm:inline">{BIOMES[active] ?? "Surface"}</span>
+            </span>
+          </span>
+        </button>
+
+        <div className="pointer-events-auto flex flex-none items-center gap-1.5 sm:gap-2">
+          <a href={profile.resume} download className="mc-btn mc-btn-sm mc-btn-green" aria-label="Download résumé">
+            <Download size={16} strokeWidth={3} />
+            <span className="hidden sm:inline">Résumé</span>
+          </a>
           <button
-            onClick={() => handleNav("home")}
-            className="text-[15px] font-semibold tracking-tight text-white"
-            aria-label="Go to top"
+            type="button"
+            onClick={() => setSound(!sound)}
+            className="mc-btn mc-btn-sm !px-2"
+            aria-pressed={sound}
+            aria-label={sound ? "Mute music and sounds" : "Turn on music and sounds"}
+            title={sound ? "Mute" : "Sound on"}
           >
-            Y<span className="text-white/50">.</span>
+            {sound ? <Volume2 size={20} strokeWidth={3} /> : <VolumeX size={20} strokeWidth={3} />}
           </button>
-
-          <ul className="hidden items-center gap-8 md:flex">
-            {navLinks.map((link) => (
-              <li key={link.id}>
-                <button
-                  onClick={() => handleNav(link.id)}
-                  className={cn(
-                    "text-[12px] tracking-[-0.01em] transition-colors duration-300",
-                    active === link.id
-                      ? "text-white"
-                      : "text-white/70 hover:text-white"
-                  )}
-                  aria-current={active === link.id ? "true" : undefined}
-                >
-                  {link.label}
-                </button>
-              </li>
-            ))}
-          </ul>
-
-          <div className="flex items-center gap-3">
-            <a
-              href={profile.resume}
-              download
-              className="hidden rounded-full bg-light-accent px-3.5 py-1 text-[12px] font-medium text-white transition hover:brightness-110 md:inline-flex"
-            >
-              Resume
-            </a>
-            <ThemeToggle theme={theme} onToggle={toggleTheme} />
-            <button
-              type="button"
-              className="flex h-8 w-8 items-center justify-center text-white md:hidden"
-              aria-label={open ? "Close menu" : "Open menu"}
-              aria-expanded={open}
-              onClick={() => setOpen((v) => !v)}
-            >
-              {open ? <X size={18} /> : <Menu size={18} />}
-            </button>
-          </div>
-        </nav>
-      </div>
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="glass-dark fixed inset-x-0 top-12 bottom-0 overflow-y-auto text-white md:hidden"
+          <button
+            type="button"
+            onClick={() => { toggleTheme(); play("chime"); }}
+            className="mc-btn mc-btn-sm !px-2"
+            aria-label={`Switch to ${theme === "dark" ? "day" : "night"}`}
+            title={theme === "dark" ? "Make it day" : "Make it night"}
           >
-            <ul className="shell flex flex-col pt-6">
-              {navLinks.map((link, i) => (
-                <motion.li
-                  key={link.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.05 * i, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                  className="border-b border-white/10"
-                >
-                  <button
-                    onClick={() => handleNav(link.id)}
-                    className="w-full py-4 text-left text-[28px] font-semibold tracking-tight"
-                  >
-                    {link.label}
-                  </button>
-                </motion.li>
-              ))}
-              <li className="pt-6">
-                <a href={profile.resume} download className="btn-primary w-full">
-                  Download Resume
-                </a>
-              </li>
-            </ul>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </header>
+            <img src={theme === "dark" ? icons.sun : icons.moon} alt="" width={22} height={22} />
+          </button>
+        </div>
+      </header>
+
+      <nav className="hotbar" aria-label="Sections">
+        <div className="xp" role="progressbar" aria-label="Scroll depth" aria-valuenow={Math.round(progress * 100)} aria-valuemin={0} aria-valuemax={100}>
+          <i style={{ transform: `scaleX(${progress})` }} />
+        </div>
+        <ul className="slots">
+          {navLinks.map((link, i) => (
+            <li key={link.id}>
+              <button
+                onClick={() => { play("ui"); scrollToSection(link.id, 24); }}
+                className={cn("slot", active === link.id && "on")}
+                aria-current={active === link.id ? "true" : undefined}
+                aria-label={link.label}
+              >
+                <img src={slotIcon(link.id)} alt="" />
+                <span className="key" aria-hidden>{i + 1}</span>
+                <span className="slot-tip" aria-hidden>{link.label}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </>
   );
 }

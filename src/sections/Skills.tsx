@@ -1,95 +1,88 @@
 import { motion } from "framer-motion";
-import { Cloud, Database, Layers, Layout, Server, Wrench } from "lucide-react";
-import { Section, SectionHeader } from "@/components/ui/Section";
+import { Layer, Panel, SectionHeader } from "@/components/ui/Section";
 import { skillCategories } from "@/data/resume";
-import { fadeUp, stagger, viewportOnce } from "@/utils/motion";
-import type { SkillCategory } from "@/types";
+import { scaleIn, stagger, viewportOnce } from "@/utils/motion";
+import { CartTrain, Flyers, Ores, Torch } from "@/mc/Ambient";
+import { gem, ingot } from "@/mc/sprites";
 
-const icons: Record<SkillCategory["icon"], typeof Server> = {
-  server: Server,
-  database: Database,
-  layers: Layers,
-  cloud: Cloud,
-  wrench: Wrench,
-  layout: Layout,
+/** Each category is mined from its own ore. */
+const ORE: Record<string, { name: string; color: string }> = {
+  Backend: { name: "diamond", color: "#5fe0d8" },
+  Databases: { name: "emerald", color: "#3fd16a" },
+  Architecture: { name: "amethyst", color: "#b57bf0" },
+  Cloud: { name: "lapis", color: "#4a7df0" },
+  Tools: { name: "gold", color: "#f2c84b" },
+  Frontend: { name: "ruby", color: "#ef5a4c" },
 };
 
 const all = skillCategories.flatMap((c) => c.skills.map((s) => s.name));
 
 export function Skills() {
   return (
-    <Section id="skills" tone="black" wide className="overflow-hidden">
-      <div className="shell !px-0">
-        <SectionHeader
-          eyebrow="Skills"
-          title="A deliberate stack."
-          sub="Depth where it matters."
-          description={
-            <span className="text-white/60">
-              Core strength in the service and data layers. Comfortable across the
-              rest of the stack when a project needs it.
-            </span>
-          }
-        />
-      </div>
+    <Layer
+      id="skills"
+      material="deep"
+      above="stone"
+      wide
+      className="overflow-hidden"
+      fx={
+        <>
+          <Ores kinds={Object.values(ORE).map((o) => o.name)} seed={5} density={0.6} />
+          <Flyers kind="bat" count={3} />
+          <Torch style={{ left: "5%", top: 220 }} />
+          <Torch style={{ right: "5%", top: 640 }} />
+        </>
+      }
+    >
+      <SectionHeader
+        eyebrow="Skills"
+        title="A deliberate stack."
+        sub="Depth where it matters."
+        description="Core strength in the service and data layers — the gems. Comfortable across the rest of the stack when a project needs it."
+      />
 
       <motion.div
         variants={stagger}
         initial="hidden"
         whileInView="visible"
         viewport={viewportOnce}
-        className="grid gap-px overflow-hidden rounded-4xl bg-white/10 sm:grid-cols-2 lg:grid-cols-3"
+        className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
       >
         {skillCategories.map((cat) => {
-          const Icon = icons[cat.icon];
+          const ore = ORE[cat.category] ?? ORE.Tools;
           return (
-            <motion.div key={cat.category} variants={fadeUp} className="bg-black p-8 sm:p-10">
-              <Icon size={26} strokeWidth={1.5} className="text-white/60" />
-              <h3 className="mt-6 text-[21px] font-semibold tracking-tight">{cat.category}</h3>
-              <ul className="mt-5 space-y-2.5">
-                {cat.skills.map((s) => (
-                  <li
-                    key={s.name}
-                    className={
-                      s.strong
-                        ? "text-[17px] font-medium text-white"
-                        : "text-[17px] text-white/45"
-                    }
-                  >
-                    {s.name}
-                    {s.strong && (
-                      <span className="ml-2 align-middle text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2997ff]">
-                        core
+            <motion.div key={cat.category} variants={scaleIn}>
+              <Panel lift className="h-full p-5 sm:p-6">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="font-head text-[32px] font-bold leading-none">{cat.category}</h3>
+                  <span className="label mute">{cat.skills.length} items</span>
+                </div>
+                <ul className="mt-5 space-y-2">
+                  {cat.skills.map((s) => (
+                    <li key={s.name} className="group flex items-center gap-3">
+                      <span className="mc-inset grid h-12 w-12 shrink-0 place-items-center">
+                        <img
+                          src={s.strong ? gem(ore.color) : ingot("#aeb4bd")}
+                          alt=""
+                          width={36}
+                          height={36}
+                          className="transition-transform duration-200 group-hover:-translate-y-1 group-hover:rotate-[-8deg] group-hover:scale-110"
+                        />
                       </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
+                      <span className={s.strong ? "font-head text-[25px]" : "mute text-[22px]"}>{s.name}</span>
+                      {s.strong && <span className="chip chip-strong ml-auto !py-0.5 !text-[16px]">Core</span>}
+                    </li>
+                  ))}
+                </ul>
+              </Panel>
             </motion.div>
           );
         })}
       </motion.div>
 
-      {/* Marquee */}
-      <div
-        className="relative mt-20 -mx-6"
-        style={{
-          maskImage: "linear-gradient(90deg, transparent, black 12%, black 88%, transparent)",
-          WebkitMaskImage: "linear-gradient(90deg, transparent, black 12%, black 88%, transparent)",
-        }}
-        aria-hidden
-      >
-        <div className="marquee gap-4">
-          {[...all, ...all].map((s, i) => (
-            <span
-              key={i}
-              className="whitespace-nowrap rounded-full border border-white/10 px-5 py-2.5 text-[15px] text-white/70"
-            >
-              {s}
-            </span>
-          ))}
-        </div>
+      <div className="-mx-5 mt-16 sm:-mx-6">
+        <CartTrain labels={all} />
       </div>
-    </Section>
+    </Layer>
   );
 }

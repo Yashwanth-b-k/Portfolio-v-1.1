@@ -12,46 +12,32 @@ interface SectionHeaderProps {
   className?: string;
 }
 
-/**
- * Apple pattern: a bold statement followed by a grey continuation
- * on the same headline line, then an optional lede paragraph.
- */
-export function SectionHeader({
-  eyebrow,
-  title,
-  sub,
-  description,
-  align = "left",
-  className,
-}: SectionHeaderProps) {
+/** A wooden sign, a big pixel headline with a gold continuation, and an optional lede. */
+export function SectionHeader({ eyebrow, title, sub, description, align = "left", className }: SectionHeaderProps) {
   return (
     <motion.div
       variants={stagger}
       initial="hidden"
       whileInView="visible"
       viewport={viewportOnce}
-      className={cn(
-        "mb-14 max-w-3xl sm:mb-20",
-        align === "center" && "mx-auto text-center",
-        className
-      )}
+      className={cn("mb-12 max-w-3xl sm:mb-16", align === "center" && "mx-auto text-center", className)}
     >
       {eyebrow && (
-        <motion.p variants={fadeUp} className="eyebrow mb-4">
-          {eyebrow}
+        <motion.p variants={fadeUp} className="mb-8">
+          <span className="sign">{eyebrow}</span>
         </motion.p>
       )}
-      <motion.h2 variants={fadeUp} className="headline">
+      <motion.h2 variants={fadeUp} className="h-title">
         {title}
         {sub && (
           <>
             {" "}
-            <span className="headline-sub">{sub}</span>
+            <span className="h-sub">{sub}</span>
           </>
         )}
       </motion.h2>
       {description && (
-        <motion.p variants={fadeUp} className="lede mt-6">
+        <motion.p variants={fadeUp} className="lede mt-5">
           {description}
         </motion.p>
       )}
@@ -59,35 +45,59 @@ export function SectionHeader({
   );
 }
 
-interface SectionProps {
-  id: string;
+type Material = "dirt" | "stone" | "deep" | "bedrock";
+
+interface LayerProps {
+  id?: string;
+  /** What this slice of the world is made of. */
+  material: Material;
+  /** The material of the layer above; its blocks hang raggedly into this one. */
+  above?: Exclude<Material, "bedrock">;
+  /** First layer under the grass — daylight fades in from the top. */
+  first?: boolean;
+  /** Decoration behind the content: ores, torches, flyers. */
+  fx?: ReactNode;
+  /** Things that sit above the content (e.g. bugs). */
+  over?: ReactNode;
   children: ReactNode;
   className?: string;
-  tone?: "white" | "grey" | "black";
   wide?: boolean;
   ariaLabel?: string;
 }
 
-export function Section({
-  id,
-  children,
-  className,
-  tone = "white",
-  wide,
-  ariaLabel,
-}: SectionProps) {
+/** One stratum of the page: a tiled block wall, shaded, with content on top. */
+export function Layer({ id, material, above, first, fx, over, children, className, wide, ariaLabel }: LayerProps) {
   return (
     <section
       id={id}
       aria-label={ariaLabel}
-      className={cn(
-        "scroll-mt-12 py-24 sm:py-32",
-        tone === "grey" && "panel",
-        tone === "black" && "panel-black",
-        className
-      )}
+      data-mat={material === "bedrock" ? "deep" : material}
+      className={cn("layer scroll-mt-6 py-24 sm:py-32", `layer-${material}`, first && "layer-first", className)}
     >
-      <div className={wide ? "shell-wide" : "shell"}>{children}</div>
+      {above && <div className="layer-edge" style={{ backgroundImage: `var(--e-${above})` }} />}
+      <div className="layer-shade" />
+      {fx && <div className="layer-fx">{fx}</div>}
+      <div className={cn("layer-body", wide ? "shell-wide" : "shell")}>{children}</div>
+      {over}
     </section>
+  );
+}
+
+/** A bevelled GUI panel. */
+export function Panel({
+  children,
+  className,
+  dark,
+  lift,
+}: {
+  children: ReactNode;
+  className?: string;
+  dark?: boolean;
+  lift?: boolean;
+}) {
+  return (
+    <div data-mat="wood" className={cn("mc-panel", dark && "mc-panel-dark", lift && "lift", className)}>
+      {children}
+    </div>
   );
 }

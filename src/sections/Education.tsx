@@ -1,12 +1,28 @@
 import { motion } from "framer-motion";
-import { Section, SectionHeader } from "@/components/ui/Section";
+import { Layer, Panel, SectionHeader } from "@/components/ui/Section";
 import { Badge } from "@/components/ui/Badge";
+import { CountUp } from "@/components/fx/CountUp";
 import { education } from "@/data/resume";
-import { fadeUp, stagger, viewportOnce } from "@/utils/motion";
+import { fadeUp, scaleIn, stagger, viewportOnce } from "@/utils/motion";
+import { Torch } from "@/mc/Ambient";
+import { Guide } from "@/mc/Guide";
 
+/** A library buried in the deep stone. */
 export function Education() {
   return (
-    <Section id="education" tone="grey">
+    <Layer
+      id="education"
+      material="deep"
+      fx={
+        <>
+          <div className="shelf absolute inset-x-0 top-0" />
+          <div className="shelf absolute inset-x-0 bottom-0" />
+          <Torch style={{ left: "6%", top: 190 }} />
+          <Torch style={{ right: "6%", top: 190 }} />
+        </>
+      }
+      className="!py-40 sm:!py-48"
+    >
       <SectionHeader eyebrow="Education" title="Foundations." sub="Built on fundamentals." />
 
       {education.map((e) => (
@@ -16,43 +32,43 @@ export function Education() {
           initial="hidden"
           whileInView="visible"
           viewport={viewportOnce}
-          className="grid gap-10 md:grid-cols-[1fr_auto] md:items-start"
+          className="grid gap-6 md:grid-cols-[1fr_auto] md:items-stretch"
         >
           <motion.div variants={fadeUp}>
-            <p className="eyebrow">{e.duration}</p>
-            <h3 className="mt-3 text-[clamp(1.75rem,3vw,2.5rem)] font-semibold leading-[1.1] tracking-tight">
-              {e.institution}
-            </h3>
-            <p className="mt-2 text-[19px] text-light-muted dark:text-dark-muted">
-              {e.degree}
-            </p>
-            <p className="text-[15px] text-light-muted/80 dark:text-dark-muted/80">{e.location}</p>
-
-            {e.courses && (
-              <div className="mt-8 flex flex-wrap gap-2">
-                {e.courses.map((c) => (
-                  <Badge key={c}>{c}</Badge>
-                ))}
-              </div>
-            )}
+            <Panel className="h-full p-6 sm:p-8">
+              <p className="label mute">{e.duration}</p>
+              <h3 className="mt-3 font-head text-[clamp(2.1rem,3.6vw,3rem)] font-bold leading-none">{e.institution}</h3>
+              <p className="mt-3 text-[28px] leading-tight">{e.degree}</p>
+              <p className="mute">{e.location}</p>
+              {e.courses && (
+                <div className="mt-6 flex flex-wrap gap-2">
+                  {e.courses.map((c) => (
+                    <Badge key={c}>{c}</Badge>
+                  ))}
+                </div>
+              )}
+            </Panel>
           </motion.div>
 
           {e.gpa && (
-            <motion.div
-              variants={fadeUp}
-              className="tile-dark flex min-w-[220px] flex-col justify-between p-8"
-            >
-              <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-white/50">
-                CGPA
-              </p>
-              <p className="text-gradient-cool mt-6 text-6xl font-semibold tracking-tightest">
-                {e.gpa.split(" ")[0]}
-              </p>
-              <p className="mt-1 text-white/50">out of 10</p>
+            <motion.div variants={scaleIn}>
+              <Panel dark className="flex h-full min-w-[230px] flex-col justify-between gap-6 p-7">
+                <p className="label flex items-center justify-between text-white/55">
+                  CGPA <span className="orb" aria-hidden />
+                </p>
+                <p className="font-pixel text-[3.2rem] leading-none text-[#8fe34a]" style={{ textShadow: "4px 4px 0 #1d3a10" }}>
+                  <CountUp value={e.gpa.split(" ")[0]} duration={1.4} />
+                </p>
+                <p className="text-white/55">out of 10</p>
+              </Panel>
             </motion.div>
           )}
         </motion.div>
       ))}
-    </Section>
+
+      <Guide look="scholar" name="Librarian" flip className="mt-10 justify-start" say={["Shh.", "Operating Systems is on the third shelf."]}>
+        Four years of fundamentals: data structures, algorithms, operating systems, databases. <b>I still read the docs.</b>
+      </Guide>
+    </Layer>
   );
 }

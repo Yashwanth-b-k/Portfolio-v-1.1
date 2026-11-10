@@ -1,125 +1,132 @@
 import { motion } from "framer-motion";
 import { Database, Layers, MapPin, Server, ShieldCheck } from "lucide-react";
-import { Section, SectionHeader } from "@/components/ui/Section";
+import { Layer, Panel, SectionHeader } from "@/components/ui/Section";
+import { CodeWindow } from "@/components/CodeWindow";
+import { CountUp } from "@/components/fx/CountUp";
 import { profile, stats } from "@/data/resume";
 import { scaleIn, stagger, viewportOnce } from "@/utils/motion";
-import { Spotlight } from "@/components/fx/Spotlight";
-import { CountUp } from "@/components/fx/CountUp";
+import { Ores, Torch } from "@/mc/Ambient";
+import { Guide } from "@/mc/Guide";
+
+const pillars = [
+  { icon: Server, t: "ASP.NET Core", d: "C#, MediatR, REST — the service layer." },
+  { icon: Layers, t: "CQRS", d: "Commands write. Queries read. Nothing leaks." },
+  { icon: Database, t: "Three databases", d: "PostgreSQL · MongoDB · SQL Server." },
+];
 
 export function About() {
   const [years, users, orgs, projects] = stats;
 
   return (
-    <Section id="about" tone="white" wide>
-      <div className="shell !px-0">
-        <SectionHeader
-          eyebrow="About"
-          title="Reliable systems."
-          sub="Engineered, not improvised."
-          description={profile.summary}
-        />
-      </div>
+    <Layer
+      id="about"
+      material="stone"
+      above="dirt"
+      wide
+      fx={
+        <>
+          <Ores kinds={["coal", "iron"]} seed={3} density={0.45} />
+          <Torch style={{ left: "4%", top: 260 }} />
+          <Torch className="hidden md:block" style={{ right: "5%", top: 900 }} />
+        </>
+      }
+    >
+      <SectionHeader eyebrow="About" title="Reliable systems." sub="Engineered, not improvised." description={profile.summary} />
+
+      <Guide look="yash" name="Yashwanth" className="mb-10" say={["Mind the torches.", "Yes, the headphones are always on."]}>
+        <b>{users.value} people</b> clock in through services I help keep running. The numbers below are from
+        that platform.
+      </Guide>
 
       <motion.div
         variants={stagger}
         initial="hidden"
         whileInView="visible"
         viewport={viewportOnce}
-        className="grid gap-4 md:grid-cols-6 md:auto-rows-[220px]"
+        className="grid gap-5 md:grid-cols-6"
       >
         <motion.div variants={scaleIn} className="md:col-span-4 md:row-span-2">
-          <Spotlight dark className="h-full">
-            <div className="relative h-full p-8 text-white md:p-10">
-              <div
-                aria-hidden
-                className="absolute -right-24 -top-24 h-96 w-96 rounded-full opacity-80 blur-3xl"
-                style={{ background: "radial-gradient(circle, #5e5ce6, #0a84ff 40%, transparent 70%)" }}
-              />
-              <div className="relative flex h-full flex-col justify-between gap-10">
-                <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-white/50">Scale in production</p>
-                <div>
-                  <p className="text-gradient font-semibold tracking-tightest" style={{ fontSize: "clamp(4rem, 10vw, 8rem)", lineHeight: 0.95 }}>
-                    <CountUp value={users.value} />
-                  </p>
-                  <p className="mt-3 text-[19px] text-white/70">
-                    {users.label.toLowerCase()} across <span className="text-white">{orgs.value} organizations</span> on a CQRS-based CRM platform.
-                  </p>
-                </div>
-              </div>
+          <Panel dark lift className="flex h-full flex-col justify-between gap-10 p-7 sm:p-9">
+            <p className="label text-white/55">Scale in production</p>
+            <div>
+              <p className="font-pixel text-[#8fe34a]" style={{ fontSize: "clamp(2.6rem, 8vw, 6rem)", lineHeight: 1, textShadow: "5px 5px 0 #1d3a10" }}>
+                <CountUp value={users.value} />
+              </p>
+              <p className="mt-5 text-[28px] leading-tight text-white/75">
+                {users.label.toLowerCase()} across <span className="text-[#f2c84b]">{orgs.value} organizations</span> on a
+                CQRS-based CRM platform.
+              </p>
             </div>
-          </Spotlight>
+          </Panel>
         </motion.div>
 
         {[years, projects].map((s, i) => (
           <motion.div key={s.label} variants={scaleIn} className="md:col-span-2">
-            <Spotlight className="h-full">
-              <div className="p-8">
-                <p className="eyebrow">{i === 0 ? "Experience" : "Shipped"}</p>
-                <p className="mt-4 text-6xl font-semibold tracking-tightest">
-                  <CountUp value={s.value} duration={1.2} />
-                </p>
-                <p className="mt-1 text-light-muted dark:text-dark-muted">
-                  {i === 0 ? "years, enterprise backend" : s.label.toLowerCase()}
-                </p>
-              </div>
-            </Spotlight>
+            <Panel lift className="h-full p-7">
+              <p className="label mute">{i === 0 ? "Experience" : "Shipped"}</p>
+              <p className="mt-4 font-pixel text-[2.6rem] leading-none">
+                <CountUp value={s.value} duration={1.2} />
+              </p>
+              <p className="mute mt-3">{i === 0 ? "years, enterprise backend" : s.label.toLowerCase()}</p>
+            </Panel>
           </motion.div>
         ))}
 
-        {[
-          { icon: Server, t: "ASP.NET Core", d: "C#, MediatR, REST — the service layer." },
-          { icon: Layers, t: "CQRS", d: "Commands write. Queries read. Nothing leaks." },
-          { icon: Database, t: "Three databases", d: "PostgreSQL · MongoDB · SQL Server." },
-        ].map(({ icon: Icon, t, d }) => (
+        {pillars.map(({ icon: Icon, t, d }) => (
           <motion.div key={t} variants={scaleIn} className="md:col-span-2">
-            <Spotlight className="h-full">
-              <div className="p-8">
-                <Icon size={28} strokeWidth={1.6} className="text-light-accent dark:text-dark-accent" />
-                <p className="mt-6 text-[21px] font-semibold tracking-tight">{t}</p>
-                <p className="mt-1 text-[15px] text-light-muted dark:text-dark-muted">{d}</p>
-              </div>
-            </Spotlight>
+            <Panel lift className="h-full p-7">
+              <span className="mc-inset inline-grid h-12 w-12 place-items-center">
+                <Icon size={24} strokeWidth={2.5} style={{ color: "var(--accent)" }} />
+              </span>
+              <p className="mt-5 font-head text-[28px] font-bold leading-tight">{t}</p>
+              <p className="mute mt-1">{d}</p>
+            </Panel>
           </motion.div>
         ))}
 
         <motion.div variants={scaleIn} className="md:col-span-4">
-          <Spotlight className="h-full">
-            <div className="flex h-full flex-col justify-between gap-6 p-8 sm:flex-row sm:items-end">
-              <div className="max-w-md">
-                <ShieldCheck size={28} strokeWidth={1.6} className="text-light-accent dark:text-dark-accent" />
-                <p className="mt-6 text-[21px] font-semibold tracking-tight">Production, staging, development.</p>
-                <p className="mt-1 text-[15px] text-light-muted dark:text-dark-muted">
-                  Live-incident debugging through log analysis and root-cause work, with data integrity held across all three environments.
-                </p>
-              </div>
-              <div className="flex gap-2">
-                {["PROD", "STG", "DEV"].map((e, i) => (
-                  <motion.span
-                    key={e}
-                    initial={{ opacity: 0, y: 10 }}
-                    whileInView={{ opacity: 1 - i * 0.3, y: 0 }}
-                    viewport={viewportOnce}
-                    transition={{ delay: 0.3 + i * 0.12 }}
-                    className="rounded-xl bg-light-text px-3 py-2 font-mono text-[11px] font-semibold text-white dark:bg-white dark:text-black"
-                  >
-                    {e}
-                  </motion.span>
-                ))}
-              </div>
+          <Panel lift className="flex h-full flex-col justify-between gap-6 p-7 sm:flex-row sm:items-end">
+            <div className="max-w-md">
+              <span className="mc-inset inline-grid h-12 w-12 place-items-center">
+                <ShieldCheck size={24} strokeWidth={2.5} style={{ color: "var(--accent)" }} />
+              </span>
+              <p className="mt-5 font-head text-[28px] font-bold leading-tight">Production, staging, development.</p>
+              <p className="mute mt-1">
+                Live-incident debugging through log analysis and root-cause work, with data integrity held across
+                all three environments.
+              </p>
             </div>
-          </Spotlight>
+            <div className="flex gap-2">
+              {["PROD", "STG", "DEV"].map((e, i) => (
+                <motion.span
+                  key={e}
+                  initial={{ opacity: 0, y: -18 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={viewportOnce}
+                  transition={{ delay: 0.3 + i * 0.12, ease: [0.3, 1.5, 0.6, 1] }}
+                  className={i === 0 ? "chip chip-strong" : "chip"}
+                >
+                  {e}
+                </motion.span>
+              ))}
+            </div>
+          </Panel>
         </motion.div>
 
         <motion.div variants={scaleIn} className="md:col-span-2">
-          <Spotlight className="h-full">
-            <div className="p-8">
-              <MapPin size={28} strokeWidth={1.6} className="text-light-accent dark:text-dark-accent" />
-              <p className="mt-6 text-[21px] font-semibold tracking-tight">Bengaluru</p>
-              <p className="mt-1 text-[15px] text-light-muted dark:text-dark-muted">Karnataka, India · open to relocation</p>
-            </div>
-          </Spotlight>
+          <Panel lift className="h-full p-7">
+            <span className="mc-inset inline-grid h-12 w-12 place-items-center">
+              <MapPin size={24} strokeWidth={2.5} style={{ color: "var(--accent)" }} />
+            </span>
+            <p className="mt-5 font-head text-[28px] font-bold leading-tight">Bengaluru</p>
+            <p className="mute mt-1">Karnataka, India · open to relocation</p>
+          </Panel>
+        </motion.div>
+
+        <motion.div variants={scaleIn} className="md:col-span-6">
+          <CodeWindow />
         </motion.div>
       </motion.div>
-    </Section>
+    </Layer>
   );
 }
